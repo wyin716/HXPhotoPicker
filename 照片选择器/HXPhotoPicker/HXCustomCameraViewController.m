@@ -17,7 +17,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import "HXPhotoCustomNavigationBar.h"
 
-@interface HXCustomCameraViewController ()<HXCustomPreviewViewDelegate,HXCustomCameraBottomViewDelegate,HXCustomCameraControllerDelegate, CLLocationManagerDelegate>
+@interface HXCustomCameraViewController ()<HXCustomPreviewViewDelegate,HXCustomCameraBottomViewDelegate,HXCustomCameraControllerDelegate>
 @property (strong, nonatomic) HXCustomCameraController *cameraController;
 @property (strong, nonatomic) HXCustomPreviewView *previewView;
 @property (strong, nonatomic) UIImageView *previewImageView;
@@ -34,7 +34,6 @@
 @property (strong, nonatomic) UIButton *doneBtn;
 @property (assign, nonatomic) BOOL addAudioInputComplete;
 @property (strong, nonatomic) NSURL *videoURL;
-@property (strong, nonatomic) CLLocationManager *locationManager;
 @property (strong, nonatomic) CLLocation *location;
 @property (strong, nonatomic) UIVisualEffectView *effectView;
 @property (strong, nonatomic) UINavigationBar *customNavigationBar;
@@ -61,9 +60,6 @@
     }
     self.view.backgroundColor = [UIColor blackColor];
     
-    if ([CLLocationManager authorizationStatus] != kCLAuthorizationStatusDenied) {
-        [self.locationManager startUpdatingLocation];
-    }
 //    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.cancelBtn];
     if (self.manager.configuration.videoMaximumDuration > self.manager.configuration.videoMaximumSelectDuration) {
         self.manager.configuration.videoMaximumDuration = self.manager.configuration.videoMaximumSelectDuration;
@@ -285,9 +281,6 @@
     [self.cameraController stopSession];
 } 
 - (void)dealloc {
-    if (_locationManager) {
-        [self.locationManager stopUpdatingLocation];
-    }
     if (HXShowLog) NSSLog(@"dealloc");
 }
 - (void)cancelClick:(UIButton *)button {
@@ -691,35 +684,6 @@
         _effectView.frame = self.previewView.bounds;
     }
     return _effectView;
-}
-- (CLLocationManager *)locationManager {
-    if (!_locationManager) {
-        _locationManager = [[CLLocationManager alloc] init];
-        _locationManager.delegate = self;
-        _locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-        _locationManager.distanceFilter = kCLDistanceFilterNone;
-        [_locationManager requestWhenInUseAuthorization];
-    }
-    return _locationManager;
-}
-#pragma mark - < CLLocationManagerDelegate >
-- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
-    if (locations.lastObject) {
-        self.location = locations.lastObject;
-    }
-}
-- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
-    if(error.code == kCLErrorLocationUnknown) {
-        if (HXShowLog) NSSLog(@"定位失败，无法检索位置");
-    }
-    else if(error.code == kCLErrorNetwork) {
-        if (HXShowLog) NSSLog(@"定位失败，网络问题");
-    }
-    else if(error.code == kCLErrorDenied) {
-        if (HXShowLog) NSSLog(@"定位失败，定位权限的问题");
-        [self.locationManager stopUpdatingLocation];
-        self.locationManager = nil;
-    }
 }
 @end
 
